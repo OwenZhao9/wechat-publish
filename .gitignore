@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+uv.lock
+dist/
+build/
+
+# Local WeChat credentials, token caches, previews and articles
+.ai-daily/
+ai-daily/
+wechat.json
+.token.json
+*.push.local.md
