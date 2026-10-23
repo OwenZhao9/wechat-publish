@@ -97,6 +97,20 @@ class PushTests(unittest.TestCase):
         self.assertIn("微信公众号草稿箱", buffer.getvalue())
         token_mock.assert_not_called()
 
+    def test_write_draft_id_records_and_replaces_media_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "article.push.md"
+            path.write_text("---\ntitle: 测试标题\n---\n\n正文", encoding="utf-8")
+
+            push.write_draft_id(str(path), "old_id", 0)
+            push.write_draft_id(str(path), "new_id", 1)
+            meta, body = push.parse_push_md(str(path))
+
+            self.assertEqual(meta["media_id"], "new_id")
+            self.assertEqual(meta["draft_index"], "1")
+            self.assertEqual(path.read_text(encoding="utf-8").count("media_id"), 1)
+            self.assertEqual(body.strip(), "正文")
+
     def test_date_option_requires_a_value(self):
         with patch.object(push.sys, "argv", ["wechat-publish", "--date"]), self.assertRaises(
             SystemExit
