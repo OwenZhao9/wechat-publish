@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wechat-publish"
-version = "0.3.0.0"
+version = "0.4.0.0"
 description = "Publish Markdown articles to a WeChat Official Account draft box"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,4 +23,4 @@ classifiers = [
 wechat-publish = "push:main"
 
 [tool.setuptools]
-py-modules = ["push"]
+py-modules = ["push", "check"]

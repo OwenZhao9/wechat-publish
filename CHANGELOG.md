@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0.0] - 2026-10-23
+
+### Added
+
+- 合并 wechat-voice：写法规则（禁报幕句、控加粗、小标题写具体的事、开头写读者处境、缺点一句话带过、术语当场解释、结尾裸链接加邀请）并入 SKILL.md；自查脚本 `check.py` 及测试。
+- `check.py` 新增禁用字眼：「一句话」「先说」「先看」「一张表看懂」「下面来看」「简单来说」。
+
+### Fixed
+
+- `check.py` 分类名小标题的行号按整个文件计算，与其他检查项一致；同一行命中多个报幕短语只报一次。
+
 ## [0.3.0.0] - 2026-10-23
 
 ### Added
