@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0.0] - 2026-10-23
+
+### Added
+
+- 封面支持分别指定大图 2.35:1 和小图 1:1 的裁剪：front matter 写 `cover_crop_235` / `cover_crop_11`，推送时作为 `cover_info.crop_percent_list` 发给微信。
+
+### Changed
+
+- `cover.py` 改为「左侧正方形色块 + 右侧标题标签」版式：色块单独就是转发小图，`--main` 关键词最大，`--sub` 补充小一号；输出 2350×1000，并打印两个裁剪框。
+
 ## [0.2.0.0] - 2026-10-23
 
 ### Added

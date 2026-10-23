@@ -130,10 +130,18 @@ python3 push.py examples/article.push.md
 
 第一次推送成功后，脚本会把草稿的 `media_id` 写回文章 front matter。之后修改文章再运行同一条命令，会直接更新原来那篇草稿，不会新建副本；需要另建一篇时加 `--new`。
 
-生成封面（2.35:1，需要 Pillow）：
+生成封面（需要 Pillow）。公众号同一张封面有两种裁剪：信息流大图 2.35:1，转发卡片和列表小图 1:1。脚本把左侧正方形色块做成能单独当小图的样子，右侧补标题和标签：
 
 ```bash
-python3 cover.py 封面.jpg "第一行标题" "第二行标题" "副标题"
+python3 cover.py 封面.jpg --main 低成本 --main 出国 --sub "32 种方式" \
+    --title "普通人低成本出国的" --title "32 种方式" --tags 打工度假 互惠生 工签
+```
+
+把脚本打印的两个裁剪框写进 front matter，推送时就会分别设置大图和小图：
+
+```markdown
+cover_crop_235: 0,0,1,1
+cover_crop_11: 0,0,0.4255,1
 ```
 
 多图文草稿：
