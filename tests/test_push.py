@@ -111,6 +111,13 @@ class PushTests(unittest.TestCase):
             self.assertEqual(path.read_text(encoding="utf-8").count("media_id"), 1)
             self.assertEqual(body.strip(), "正文")
 
+    def test_cover_crops_from_front_matter(self):
+        crops = push.cover_crops({"cover_crop_235": "0,0,1,1", "cover_crop_11": "0, 0, 0.4255, 1"})
+
+        self.assertEqual([c["ratio"] for c in crops], ["2.35_1", "1_1"])
+        self.assertEqual(crops[1]["x2"], "0.4255")
+        self.assertEqual(push.cover_crops({}), [])
+
     def test_date_option_requires_a_value(self):
         with patch.object(push.sys, "argv", ["wechat-publish", "--date"]), self.assertRaises(
             SystemExit

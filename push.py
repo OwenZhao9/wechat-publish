@@ -55,7 +55,7 @@ CONFDIR = os.path.join(HOME, ".ai-daily")
 TOKEN_CACHE = os.path.join(CONFDIR, ".token.json")
 TMPDIR = os.path.join(CONFDIR, "tmp")
 TIMEOUT = 60
-VERSION = "0.2.0.0"
+VERSION = "0.3.0.0"
 
 # 正文图微信只收 jpg/png 且必须 <1MB；封面走永久素材，限制松得多
 IMG_MAX_BYTES = 1000 * 1000
@@ -599,7 +599,27 @@ def build_article(path, token, dry_run):
             art["thumb_media_id"] = r["media_id"]
             print(f"  ✓ 封面 {os.path.basename(p)}", file=sys.stderr)
 
+    # 同一张封面两种裁剪：信息流大图 2.35:1，转发卡片 / 列表小图 1:1。
+    # 不指定时微信自己从中间裁，小图常常切掉关键字。
+    crops = cover_crops(meta)
+    if crops:
+        art["cover_info"] = {"crop_percent_list": crops}
+
     return art, content
+
+
+def cover_crops(meta):
+    """front matter 的 cover_crop_235 / cover_crop_11（x1,y1,x2,y2，0–1）→ 微信 crop_percent_list。"""
+    out = []
+    for key, ratio in (("cover_crop_235", "2.35_1"), ("cover_crop_11", "1_1")):
+        val = meta.get(key, "").strip()
+        if not val:
+            continue
+        parts = [p.strip() for p in val.split(",")]
+        if len(parts) != 4:
+            die(f"{key} 要写成 x1,y1,x2,y2，现在是：{val}")
+        out.append({"ratio": ratio, "x1": parts[0], "y1": parts[1], "x2": parts[2], "y2": parts[3]})
+    return out
 
 
 def preview(articles_html, date):
