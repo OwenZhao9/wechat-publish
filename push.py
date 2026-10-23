@@ -55,7 +55,7 @@ CONFDIR = os.path.join(HOME, ".ai-daily")
 TOKEN_CACHE = os.path.join(CONFDIR, ".token.json")
 TMPDIR = os.path.join(CONFDIR, "tmp")
 TIMEOUT = 60
-VERSION = "0.3.0.0"
+VERSION = "0.4.0.0"
 
 # 正文图微信只收 jpg/png 且必须 <1MB；封面走永久素材，限制松得多
 IMG_MAX_BYTES = 1000 * 1000
