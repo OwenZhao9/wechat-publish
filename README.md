@@ -128,6 +128,14 @@ python3 push.py --dry-run examples/article.push.md
 python3 push.py examples/article.push.md
 ```
 
+第一次推送成功后，脚本会把草稿的 `media_id` 写回文章 front matter。之后修改文章再运行同一条命令，会直接更新原来那篇草稿，不会新建副本；需要另建一篇时加 `--new`。
+
+生成封面（2.35:1，需要 Pillow）：
+
+```bash
+python3 cover.py 封面.jpg "第一行标题" "第二行标题" "副标题"
+```
+
 多图文草稿：
 
 ```bash

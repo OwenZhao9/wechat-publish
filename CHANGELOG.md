@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0.0] - 2026-10-23
+
+### Added
+
+- 第一次推送后把草稿 `media_id` 和 `draft_index` 写回文章 front matter；再推同一篇时调用 `draft/update` 在原草稿上更新，不新建副本。`--new` 可强制新建。
+- `cover.py`：生成 2.35:1 公众号封面图。
+- SKILL.md 加入文章写作要求、排版限制和修改已推送文章的流程。
+
+### Removed
+
+- 去掉正文超过 3000 字的提醒。
+
 ## [0.1.0.0] - 2026-10-02
 
 ### Added

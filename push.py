@@ -55,7 +55,7 @@ CONFDIR = os.path.join(HOME, ".ai-daily")
 TOKEN_CACHE = os.path.join(CONFDIR, ".token.json")
 TMPDIR = os.path.join(CONFDIR, "tmp")
 TIMEOUT = 60
-VERSION = "0.1.0.0"
+VERSION = "0.2.0.0"
 
 # 正文图微信只收 jpg/png 且必须 <1MB；封面走永久素材，限制松得多
 IMG_MAX_BYTES = 1000 * 1000
@@ -502,6 +502,21 @@ def parse_push_md(path):
     return meta, body
 
 
+def write_draft_id(path, media_id, index):
+    """把草稿 media_id 和在多图文里的位置写回 front matter，下次推同一篇就改原草稿。"""
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.match(r"^(\s*---\s*\n)(.*?)(\n---\s*\n?)(.*)$", text, re.DOTALL)
+    if not m:
+        warn(f"{os.path.basename(path)} 没有 front matter，草稿 ID 没写回")
+        return
+    lines = [ln for ln in m.group(2).split("\n")
+             if not re.match(r"^\s*(media_id|draft_index)\s*:", ln)]
+    lines += [f"media_id: {media_id}", f"draft_index: {index}"]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(m.group(1) + "\n".join(lines) + m.group(3) + m.group(4))
+
+
 def judgment_section(body):
     """取「我的判断」这一节的正文，到下一个标题为止。没有这一节返回 None（速递副条就没有）。"""
     body = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)   # 思路线索是注释，不算你写的字
@@ -530,9 +545,7 @@ def guard(meta, body, path):
             warn(f"{name} 的「我的判断」只有 {jw} 字（规范是 400–600）——确认是你想要的长度")
 
     words = len(re.findall(r"[一-鿿]", body))
-    if words > 3000:
-        warn(f"{name} 中文 {words} 字，超过 3000 红线 —— 完读率会掉，建议砍。")
-    elif words < 800:
+    if words < 800:
         print(f"  · {name}：{words} 字（速递体量，正常）", file=sys.stderr)
     else:
         print(f"  · {name}：{words} 字", file=sys.stderr)
@@ -619,6 +632,7 @@ def main():
             "选项：\n"
             "  --dry-run      只生成 HTML 预览，不访问微信接口\n"
             "  --force-token  强制刷新 access token\n"
+            "  --new          忽略文章里记录的 media_id，新建一条草稿\n"
             "  --date DATE    指定默认文章日期\n"
             "  --version      显示版本\n"
         )
@@ -659,9 +673,20 @@ def main():
         print(f"\n✓ dry-run 完成，没碰任何接口。\n  预览：open {path}\n", file=sys.stderr)
         return
 
-    r = post_json(f"{API}/draft/add?access_token={token}", {"articles": articles}, "新增草稿")
-
-    print(f"\n✓ 草稿已进草稿箱  media_id={r.get('media_id', '?')}", file=sys.stderr)
+    # 推过的文章 front matter 里有 media_id：改原草稿，不新建副本。--new 强制新建。
+    media_id = "" if "--new" in args else parse_push_md(files[0])[0].get("media_id", "")
+    if media_id:
+        for i, (f, art) in enumerate(zip(files, articles)):
+            idx = int(parse_push_md(f)[0].get("draft_index", i))
+            post_json(f"{API}/draft/update?access_token={token}",
+                      {"media_id": media_id, "index": idx, "articles": art}, f"更新草稿第 {idx + 1} 篇")
+        print(f"\n✓ 已在原草稿上更新  media_id={media_id}", file=sys.stderr)
+    else:
+        r = post_json(f"{API}/draft/add?access_token={token}", {"articles": articles}, "新增草稿")
+        media_id = r.get("media_id", "")
+        for i, f in enumerate(files):
+            write_draft_id(f, media_id, i)
+        print(f"\n✓ 草稿已进草稿箱  media_id={media_id}（已写回文章 front matter）", file=sys.stderr)
     print(f"  预览：open {path}", file=sys.stderr)
     print("\n下一步（人工，故意的）：", file=sys.stderr)
     print("  手机「订阅号助手」→ 底部创作 → 草稿箱 → 选中 → 群发", file=sys.stderr)
