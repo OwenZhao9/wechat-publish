@@ -43,13 +43,17 @@ def main():
     ap.add_argument("--sub", default="")
     ap.add_argument("--title", action="append", required=True)
     ap.add_argument("--tags", nargs="*", default=[])
+    # 配色：文章讲某个品牌时可换成该品牌官网的颜色
+    ap.add_argument("--accent", default=ACCENT, help="色块和短横线")
+    ap.add_argument("--ink", default=INK, help="右侧标题文字")
+    ap.add_argument("--paper", default=PAPER, help="右侧底色")
     a = ap.parse_args()
 
-    img = Image.new("RGB", (W, H), PAPER)
+    img = Image.new("RGB", (W, H), a.paper)
     d = ImageDraw.Draw(img)
 
     # 左：正方形色块（= 1:1 小图）
-    d.rectangle((0, 0, SQ, SQ), fill=ACCENT)
+    d.rectangle((0, 0, SQ, SQ), fill=a.accent)
     cx = SQ / 2
     # 主关键词：所有行同一字号，按最长一行撑满色块宽度的 78%
     size = min(320, int(SQ * 0.78 / max(len(t) for t in a.main)))
@@ -68,9 +72,9 @@ def main():
     x = SQ + 110
     y = 210
     for line in a.title:
-        d.text((x, y), line, font=font(118), fill=INK)
+        d.text((x, y), line, font=font(118), fill=a.ink)
         y += 160
-    d.rectangle((x, y + 20, x + 120, y + 32), fill=ACCENT)
+    d.rectangle((x, y + 20, x + 120, y + 32), fill=a.accent)
     y += 90
     tf = font(52, bold=False)
     tx = x
