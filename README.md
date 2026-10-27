@@ -157,6 +157,14 @@ python3 cover.py 封面.jpg --main 低成本 --main 出国 --sub "32 种方式" 
     --title "普通人低成本出国的" --title "32 种方式" --tags 打工度假 互惠生 工签
 ```
 
+默认是橙色。文章讲某个品牌时，可以换成它官网的配色，例如企业微信：
+
+```bash
+python3 cover.py 封面.jpg --main 企业微信 --main 系统接入 --sub "可信域名配置" \
+    --title "如何把公司系统" --title "接入企业微信" --tags 自建应用 可信域名 \
+    --accent '#267EF0' --ink '#0F141A' --paper '#F2F7FE'
+```
+
 把脚本打印的两个裁剪框写进 front matter，推送时就会分别设置大图和小图：
 
 ```markdown
