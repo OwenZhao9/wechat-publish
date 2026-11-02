@@ -55,8 +55,12 @@ def main():
     # 左：正方形色块（= 1:1 小图）
     d.rectangle((0, 0, SQ, SQ), fill=a.accent)
     cx = SQ / 2
-    # 主关键词：所有行同一字号，按最长一行撑满色块宽度的 78%
-    size = min(320, int(SQ * 0.78 / max(len(t) for t in a.main)))
+    # 主关键词：所有行同一字号，按最长一行的实际像素宽撑满色块宽度的 78%。
+    # 按字数算会把英文当成和汉字一样宽，"Apple ID" 这类词就被缩得很小。
+    widest = max(font(100).getlength(t) for t in a.main) / 100
+    size = int(SQ * 0.78 / widest)
+    # 行数多时高度也不能超出色块（留出补充文字的位置）
+    size = min(320, size, int(SQ * 0.8 / (1.12 * len(a.main) + (0.75 if a.sub else 0))))
     main_f, sub_f = font(size), font(int(size * 0.42))
     line_h = int(size * 1.12)
     block = line_h * len(a.main) + (int(size * 0.75) if a.sub else 0)
@@ -65,8 +69,10 @@ def main():
         center_text(d, cx, y, t, main_f, "#FFFFFF")
         y += line_h
     if a.sub:
-        d.rectangle((cx - 60, y + 10, cx + 60, y + 20), fill="#FFFFFF")
-        center_text(d, cx, y + 60, a.sub, sub_f, "#FFFFFF")
+        # 短横线放在英文下伸部分（p、g、y）以下，免得压到字母
+        gap = int(size * 0.18)
+        d.rectangle((cx - 60, y + gap, cx + 60, y + gap + 10), fill="#FFFFFF")
+        center_text(d, cx, y + gap + 50, a.sub, sub_f, "#FFFFFF")
 
     # 右：完整标题 + 标签（只在大图里出现）
     x = SQ + 110

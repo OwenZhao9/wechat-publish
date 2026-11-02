@@ -517,6 +517,61 @@ def write_draft_id(path, media_id, index):
         f.write(m.group(1) + "\n".join(lines) + m.group(3) + m.group(4))
 
 
+def set_front_matter(path, fields):
+    """在 front matter 里写入或替换若干字段，其余行原样保留。"""
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.match(r"^(\s*---\s*\n)(.*?)(\n---\s*\n?)(.*)$", text, re.DOTALL)
+    if not m:
+        return
+    keys = "|".join(re.escape(k) for k in fields)
+    lines = [ln for ln in m.group(2).split("\n") if not re.match(rf"^\s*({keys})\s*:", ln)]
+    lines += [f"{k}: {v}" for k, v in fields.items()]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(m.group(1) + "\n".join(lines) + m.group(3) + m.group(4))
+
+
+# 后台能手改、又会被 draft/update 整篇覆盖的字段。
+KEEP_ONLINE = ("title", "digest", "author")
+
+
+def adopt_online_edits(path, art, online):
+    """后台改过的字段以后台为准：线上值和上次推送的值不同，就是有人在后台改过。
+
+    上次推送的值记在 front matter 的 pushed_<字段> 里。没有记录（老文章）时，
+    线上和本地不同也按后台改过处理，宁可保留人改的，不覆盖。
+    人改过的字段记进 locked，此后每次推送都用线上值，本地再怎么改也不推上去。
+    """
+    meta = parse_push_md(path)[0]
+    locked = {k.strip() for k in meta.get("locked", "").replace("，", ",").split(",") if k.strip()}
+    adopted = {}
+    for k in KEEP_ONLINE:
+        cur = (online.get(k) or "").strip()
+        if not cur:
+            continue
+        last = meta.get(f"pushed_{k}")
+        if k in locked:
+            if cur != (art.get(k) or ""):
+                art[k] = cur
+                adopted[k] = cur
+            continue
+        if cur != (art.get(k) or "") and (last is None or cur != last):
+            art[k] = cur
+            adopted[k] = cur
+            locked.add(k)
+    if adopted or locked:
+        fields = dict(adopted)
+        if locked:
+            fields["locked"] = ",".join(k for k in KEEP_ONLINE if k in locked)
+        set_front_matter(path, fields)
+    for k, v in adopted.items():
+        print(f"  ↺ {k} 由你在后台改过，已锁定，保留后台版本：{v}", file=sys.stderr)
+
+
+def record_pushed(path, art):
+    set_front_matter(path, {f"pushed_{k}": art.get(k, "") for k in KEEP_ONLINE})
+
+
 def judgment_section(body):
     """取「我的判断」这一节的正文，到下一个标题为止。没有这一节返回 None（速递副条就没有）。"""
     body = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)   # 思路线索是注释，不算你写的字
@@ -696,16 +751,22 @@ def main():
     # 推过的文章 front matter 里有 media_id：改原草稿，不新建副本。--new 强制新建。
     media_id = "" if "--new" in args else parse_push_md(files[0])[0].get("media_id", "")
     if media_id:
+        online = post_json(f"{API}/draft/get?access_token={token}",
+                           {"media_id": media_id}, "读取线上草稿").get("news_item", [])
         for i, (f, art) in enumerate(zip(files, articles)):
             idx = int(parse_push_md(f)[0].get("draft_index", i))
+            if idx < len(online):
+                adopt_online_edits(f, art, online[idx])
             post_json(f"{API}/draft/update?access_token={token}",
                       {"media_id": media_id, "index": idx, "articles": art}, f"更新草稿第 {idx + 1} 篇")
+            record_pushed(f, art)
         print(f"\n✓ 已在原草稿上更新  media_id={media_id}", file=sys.stderr)
     else:
         r = post_json(f"{API}/draft/add?access_token={token}", {"articles": articles}, "新增草稿")
         media_id = r.get("media_id", "")
         for i, f in enumerate(files):
             write_draft_id(f, media_id, i)
+            record_pushed(f, articles[i])
         print(f"\n✓ 草稿已进草稿箱  media_id={media_id}（已写回文章 front matter）", file=sys.stderr)
     print(f"  预览：open {path}", file=sys.stderr)
     print("\n下一步（人工，故意的）：", file=sys.stderr)
