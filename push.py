@@ -60,6 +60,7 @@ VERSION = "0.4.0.0"
 # 正文图微信只收 jpg/png 且必须 <1MB；封面走永久素材，限制松得多
 IMG_MAX_BYTES = 1000 * 1000
 COVER_MAX_BYTES = 4 * 1000 * 1000
+GIF_MAX_BYTES = 10 * 1000 * 1000   # 永久素材图片上限 10MB，支持 gif
 
 # 你在 SKILL.md publish 阶段定的排版规范，直接内联。
 # 公众号编辑器会剥掉 <style> 标签和 class，只认 style="..."，没有第二条路。
@@ -629,6 +630,14 @@ def build_article(path, token, dry_run):
             content = content.replace(ph, "file://" + local)
     else:
         for local, ph in ctx["images"].items():
+            # 正文图接口 uploadimg 只收 jpg/png，GIF 会被压成静态图。
+            # GIF 走永久素材 add_material（type=image，≤10MB，支持 gif），返回的 url 可在正文里用。
+            if local.lower().endswith(".gif") and os.path.getsize(local) <= GIF_MAX_BYTES:
+                r = post_file(f"{API}/material/add_material?access_token={token}&type=image",
+                              local, f"上传正文动图 {os.path.basename(local)}")
+                content = content.replace(ph, r["url"])
+                print(f"  ✓ 正文动图 {os.path.basename(local)}", file=sys.stderr)
+                continue
             up = prep_image(local, IMG_MAX_BYTES, workdir)
             r = post_file(f"{API}/media/uploadimg?access_token={token}", up, f"上传正文图 {os.path.basename(local)}")
             content = content.replace(ph, r["url"])
