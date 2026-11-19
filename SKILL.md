@@ -265,7 +265,7 @@ fans_only_comment: 0
    2. 进新建图文编辑器：在页面里用 JS 从地址栏取 `token`，直接跳到 `/cgi-bin/appmsg?t=media/appmsg_edit_v2&action=edit&isNew=1&type=77&lang=zh_CN&token=<token>`。token 只在页面里用，不打印出来。
    3. 点标题框输入标题；点「请输入作者」输入 `AI 零边际`。
    4. 跑 `python3 <skill>/clip.py <文章.push.md>`，把排好版的正文放进剪贴板；在编辑器正文区（作者下面「从这里开始写正文」）点一下，按 cmd+V。粘贴后用 JS 读第二个 `.ProseMirror` 的文字，确认开头和结尾都对。要整体换正文时，用 JS 选中这个 `.ProseMirror` 的全部内容再粘贴。正文有本地图片时，按 clip.py 打印的清单，在编辑器里用「图片 → 本地上传」插到对应位置。
-   5. 滚到正文下方，在摘要框输入 digest。
+   5. 滚到正文下方填摘要。编辑器粘贴正文后会自动把正文开头塞进摘要框（`#js_description`），直接点进去打字会接在后面。先用 JS 聚焦并全选这个框，按 Delete 清空，再输入 digest；填完用 JS 读一遍它的值，确认和 digest 一字不差。
    6. 鼠标移到封面框的「+」，点「从图片库选择」→ 用 `file_upload` 传到对话框里的文件输入框（不要点「上传文件」按钮，会弹系统文件窗口）→ 选中刚传的图 →「下一步」。2.35:1 默认铺满即可；点右侧「1:1」，把裁剪框拖到关键字上，再点「确认」。
    7. 原创保持「未声明」，点「保存为草稿」，看到「已保存」。
    8. 打开草稿箱（`/cgi-bin/appmsg?begin=0&count=10&type=77&action=list_card&lang=zh_CN&token=<token>`），确认新草稿排在最前面、封面和标题都对，然后关掉自己开的标签页。
